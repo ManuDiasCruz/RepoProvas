@@ -2,8 +2,9 @@ import { Request, Response } from "express";
 import * as userService from "./../services/userService.js";
 
 export async function signUp(req: Request, res: Response) {
-    await userService.create(req.body);
-    res.status(201);
+    const { email, password, confirmPassword } = req.body;
+    const user = await userService.create({ email, password });
+    res.status(201).send(user);
 }
 
 export async function signIn(req: Request, res: Response) {

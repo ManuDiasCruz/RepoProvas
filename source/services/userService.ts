@@ -18,7 +18,7 @@ export async function create(user: UserData){
     const hashedPassword = bcrypt.hashSync(user.password, SALT);
 
     const newUser = await userRepository.create({ ...user, password: hashedPassword });
-
+    
     return newUser;
 }
 
@@ -35,4 +35,12 @@ export async function signIn(user: UserData){
     const token = jwt.sign({id: thereIsUser.id, email: thereIsUser.email}, process.env.JWT_SECRET, { expiresIn: "12h" });
 
     return { token };
+}
+
+export async function findById(id: number) {
+    const user = await userRepository.search("id", id);
+    if (!user) 
+        throw error.notFoundError("User not found");
+  
+    return user;
 }

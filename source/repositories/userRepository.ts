@@ -9,8 +9,7 @@ export async function create(user: UserData) {
 
 export async function search(param: string, value: string | number) {
     return prisma.user.findFirst({
-        where: {
-           [param]: value
+        where: { [param]: value
         }
     });
 }

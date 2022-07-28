@@ -1,12 +1,12 @@
 import bcrypt from "bcrypt";
-import { prisma } from "../../src/database.js";
-import { CreateUserData } from "../../src/services/userService.js";
+import { prisma } from "../../source/config/prisma_database.js";
+import { UserData } from "../../source/utils/types";
 
-export default async function userFactory(user: CreateUserData) {
-  return prisma.user.create({
-    data: {
-      ...user,
-      password: bcrypt.hashSync(user.password, 10),
-    },
-  });
+export default async function userFactory(user: UserData) {
+    return prisma.user.create({
+        data: {
+            ...user,
+            password: bcrypt.hashSync(user.password, 10),
+        }
+    });
 }
