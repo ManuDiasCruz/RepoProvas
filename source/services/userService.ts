@@ -1,36 +1,38 @@
+import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { User } from "@prisma/client";
+import dotenv from "dotenv";
 
-import * as encripUtils from "./../utils/encriptation.js";
-import { userData } from "./../utils/types.js";
+import { UserData } from "./../utils/types.js";
 import * as userRepository from "./../repositories/userRepository.js";
+import * as error from "../utils/errorUtils.js";
 
-export async function create(user: userData){
+dotenv.config();
+
+export async function create(user: UserData){
     const thereIsUser = await userRepository.search("email", user.email);
     
     if(thereIsUser) 
-        throw { type: "conflict", message: "User already exists" };
+        throw error.conflictError("Email must be unique");
 
-    const hashedPass = encripUtils.encryptPassword(user.password);
-    const newUser = await userRepository.create({ ...user, password: hashedPass });
+    const SALT = 12;
+    const hashedPassword = bcrypt.hashSync(user.password, SALT);
+
+    const newUser = await userRepository.create({ ...user, password: hashedPassword });
 
     return newUser;
 }
 
-export async function signIn(user: userData){
+export async function signIn(user: UserData){
     const thereIsUser = await userRepository.search("email", user.email);
-    if (!thereIsUser)
-        throw { type: "not_found", message: "Email not registered"}
-
-    const isValid = encripUtils.decryptPassword(user.password, thereIsUser.password);
-    if(!isValid) 
-        throw { type: "unauthorized", message: "Invalid credentials. Try again." };
     
-    const token = jwt.sign( 
-        {id: thereIsUser.id, email: thereIsUser.email}, 
-        process.env.JWT_SECRET+"", 
-        { expiresIn: "12h" 
-    });
+    if (!thereIsUser)
+        throw error.notFoundError("User not found");
+
+    const isPasswordValid = bcrypt.compareSync(user.password, thereIsUser.password);
+    if (!isPasswordValid)
+        throw error.unauthorizedError("Invalid credentials");
+    
+    const token = jwt.sign({id: thereIsUser.id, email: thereIsUser.email}, process.env.JWT_SECRET, { expiresIn: "12h" });
 
     return { token };
 }
